@@ -10,10 +10,13 @@ retrieval index for semantic search.
 ## Steps
 
 1. Load approved documents (status=reviewed)
-2. Load chunk files
-3. Embed chunk text
-4. Build FAISS index
-5. Write:
+2. Run language_detection.py to classify documents for clustering
+3. Run cluster_docs_embed.py to cluster documents
+4. Human cluster review
+5. Run cluster_name.py to name clusters
+6. Human cluster name review
+7. Build FAISS index with index.py
+8. Write:
    - index.faiss
    - records.jsonl
    - manifest.json
