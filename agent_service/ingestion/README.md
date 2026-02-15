@@ -29,6 +29,7 @@ This stage ensures:
 5. Run promote_to_sources.py
 6. Run build_profiles.py
 7. Run chunk_documents.py
+8. Run language_detection.py
 
 ---
 
