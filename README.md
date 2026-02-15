@@ -1,1 +1,54 @@
- 
+# ClimSystems Climate Risk Evidence AI
+
+## Overview
+
+This system provides an evidence-grounded AI assistant for climate risk,
+regulatory disclosure, methodology support, and technical knowledge retrieval with provided sources.
+
+The architecture separates:
+
+- Ingestion (document governance + metadata)
+- Indexing (embedding + clustering)
+- Engine (retrieval + answer generation)
+- API (serving layer)
+- Logging & Metrics (governance + monitoring)
+
+All answers are citation-bound to internal evidence documents.
+
+---
+
+## Folder layout
+
+evidence_library/
+│
+├── 00_inbox/            # Raw documents
+├── 01_sources/          # Approved canonical sources (immutable)
+├── 02_normalised/       # Extracted text + structure
+├── 03_chunks/           # Chunked text for embedding
+├── 04_index/            # FAISS index + records.jsonl
+├── 05_metadata/         # documents.csv
+├── 06_logs/             # session logs
+
+agent_service/
+│
+├── ingestion/
+├── indexing/
+├── core/
+└── api/
+
+---
+
+## Workflow
+
+1. Drop documents into inbox
+2. Generate doc_id
+3. Human review of metadata
+4. Promote to sources
+5. Profile + chunk
+6. Build index
+7. Serve API
+
+---
+
+```bash
+pip install -r requirements.txt
