@@ -68,8 +68,6 @@ uvicorn agent_service.api.app:app --reload
 
 #In another terminal:
 
-'''bash
 streamlit run app.py
 
-```bash
 pip install -r requirements.txt
