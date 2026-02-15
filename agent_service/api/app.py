@@ -1,106 +1,155 @@
-#frontend
-
-import streamlit as st
-from PIL import Image
-import requests
-import json
-import re
+from fastapi import FastAPI, HTTPException, Request
+from pydantic import BaseModel
 from pathlib import Path
-import pandas as pd
+from typing import Optional, Dict
+from contextlib import asynccontextmanager
+from core.engine import init_engine
+from core.engine import run_answer
+from core.log_maker import log_session
+import uuid 
+from starlette.middleware.base import BaseHTTPMiddleware
+import time
+import logging
+logger = logging.getLogger("uvicorn.error")
+EVIDENCE_ROOT = Path(__file__).resolve.parent().parent() / "evidence_library"
+INDEX_DIR  = EVIDENCE_ROOT/ "04_index"
+INDEX_FILE = INDEX_DIR / "index.faiss"
+RECORDS_FILE = INDEX_DIR / "records.jsonl"
+EMBED_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2" 
+LOG_DIR = EVIDENCE_ROOT / "06_logs"
+SESSION_LOG = LOG_DIR / "session_log.jsonl"
+LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 
+@asynccontextmanager
+async def lifespan(app:FastAPI):
+    try:
+        init_engine(
+            index_path = INDEX_FILE,
+            records_path  = RECORDS_FILE,
+            embed_model_name = EMBED_MODEL_NAME,
+        )
+        print("[app] Engine initialised")
+        yield
+    finally:
+        # --- SHUTDOWN ---
+        print("[lifespan] Shutdown")
 
-BASE_URL = "http://127.0.0.1:8000"
-CIT_PARSE_RE = re.compile(r"DOC:(?P<doc_id>[A-Za-z0-9_\-]+)\.c(?P<chunk_id>\d+)")
-
-def parse_citation(citation: str):
-    match = CIT_PARSE_RE.search(citation)
-    if not match:
-        return None
-    
-    return {
-        "doc_id": match.group("doc_id"),
-        "chunk_id": int(match.group("chunk_id"))
-    }
-st.set_page_config(
-    page_title = "Climate AI Agent",
-    page_icon = ":bar_chart",
-    layout = "wide"
+app = FastAPI(
+    title = "ClimSystems Climate Risk Evidence API",
+    version = "0.1.0",
+    lifespan = lifespan,
 )
 
-with st.sidebar:
-    st.header("Filters", divider = True)
-    selected_doc_type = st.multiselect("Document Type: ", ["Any", "methodology", "dictionary", "standard", "report", "presentation", "qa"])
-    selected_juris = st.multiselect("Jurisdiction: ", ["Any", "nz", "au", "uk", "eu", "us", "apac", "global"])
-    selected_peril = st.multiselect("Peril: ", ["Any", "flood", "heat", "fire", "wind", "slr", "drought"])
-    selected_cluster_label_contains = st.text_input("Cluster label contains: ")
-    top_k = st.number_input("Top K (default 8): ", min_value=1, max_value=50, value=8, step=1)
+class RequestIDMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        # 1. Use incoming request-id if provided (good for proxies)
+        request_id = request.headers.get("X-Request-ID")
 
-# Initialize chat history
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+        # 2. Otherwise generate one
+        if not request_id:
+            request_id = str(uuid.uuid4())
 
-# Display chat messages from history on app rerun
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
-        if message.get("sources"):
-            for source in message.get("sources").keys():
-                with st.expander(f"{source}", expanded=False):
-                    st.markdown(f"{message.get("sources")[source]}")
-        
+        # 3. Attach to request state (FastAPI-native)
+        request.state.request_id = request_id
 
-# React to user input
-if prompt := st.chat_input("What is up?"):
-    # Display user message in chat message container
-    st.chat_message("user").markdown(prompt)
-    # Add user message to chat history
-    st.session_state.messages.append({"role": "user", "content": prompt})
+        # 4. Process request
+        response = await call_next(request)
 
-    inputs = {"question": str(prompt), "doc_type": (selected_doc_type), "jurisdiction": (selected_juris), "peril": (selected_peril), "cluster_contains": str(selected_cluster_label_contains), "top_k": int(top_k)}
-    with st.spinner(text="Thinking...", show_time=False, width="content"):
-        response = requests.post(url=f"{BASE_URL}/ask",
-                                data=json.dumps(inputs),
-                                headers={"Content-Type": "application/json"})
-    if response.status_code != 200:
-        st.error(f"API error {response.status_code}")
-        st.code(response.text)   # shows FastAPI validation details
-        st.stop()
-    # Display assistant response in chat message container
-    #with st.chat_message("assistant"):
-    #    st.markdown(response)
-    # Add assistant response to chat history
-    #st.session_state.messages.append({"role": "assistant", "content": response})
-    if response.status_code == 200:
-        result = response.json().get("answer")
-        citations_used = response.json().get("citations")
-        status = response.json().get("status")
-        if status == "ok" or status == "fixed_citations":
-            expander_content = {}
-            #st.success(f"{status}")
-            with st.chat_message("assistant"):
-                st.markdown(result)
+        # 5. Echo back to client (best practice)
+        response.headers["X-Request-ID"] = request_id
+        return response
+    
+app.add_middleware(RequestIDMiddleware)
 
-                if citations_used:
-                    for citation in citations_used:
-                        parsed_cit = parse_citation(citation)
-                        chunks_file = Path(r"C:\Users\Yinpeng Li\CLIMsystems Dropbox\Yinpeng Li\climsystems_ai\evidence_library\03_chunks\{}.chunks.jsonl".format(parsed_cit["doc_id"]))
-                        chunk_df = pd.read_json(path_or_buf = chunks_file, lines = True)
-                        chunk_text = chunk_df.loc[chunk_df["chunk_id"] == parsed_cit["chunk_id"], "text"].iloc[0]
-                        expander_content[f"{parsed_cit["doc_id"]} chunk: {parsed_cit["chunk_id"]}"] = chunk_text
-                        citation_expander = st.expander(f"{parsed_cit["doc_id"]} chunk: {parsed_cit["chunk_id"]}")
-                        with citation_expander:
-                            st.write(f"{chunk_text}")
-                st.session_state.messages.append({
-                    "role": "assistant",
-                    "content": result,
-                    "sources": expander_content
-                })
-                #st.session_state.messages.append({"role": "assistant", "content": result})
-        else:
-            st.error(f"{status}")
-       
-        
-                        
-    else:
-        st.error("Error connecting to the API")
+class AskRequest(BaseModel):
+    question: str
+    doc_type: Optional[list] = []
+    jurisdiction: Optional[list] = []
+    peril: Optional[list] = []
+    cluster_contains: Optional[str] = ""
+
+    top_k: int = 8
+
+class AskResponse(BaseModel):
+    answer: str
+    citations: list[str]
+    status: str
+    
+
+@app.get("/health")
+def health():
+    return {"status" : "ok"}
+
+
+@app.post("/ask", response_model = AskResponse)
+def ask(req: AskRequest, request: Request):
+    
+    try:
+        start_ts = time.perf_counter()
+        request_id = getattr(request.state, "request_id", "")
+        filters: Dict[str, list] = {
+            "doc_type": req.doc_type or [],
+            "jurisdiction": req.jurisdiction or [],
+            "peril": req.peril or [],
+            "cluster_contains": req.cluster_contains or "",
+        }
+
+        result = run_answer(
+            question  = req.question,
+            filters = filters,
+            top_k = req.top_k
+        )
+        latency_ms = int((time.perf_counter() - start_ts) * 1000)
+        print(result["answer"])
+        print(result["citations_used"])
+
+        log_session(
+            request_id, 
+            req.question, 
+            [
+                req.doc_type,
+                req.jurisdiction, 
+                req.peril, 
+                req.cluster_contains
+            ], 
+            result,
+            result["status"],
+            latency_ms
+
+        )
+        return AskResponse(
+            answer = result["answer"],
+            citations = result["citations_used"],
+            status = result["status"]
+        )
+    except Exception as e:
+        latency_ms = int((time.perf_counter() - start_ts) * 1000)
+        log_session(
+            request_id, 
+            req.question, 
+            [
+                req.doc_type,
+                req.jurisdiction, 
+                req.peril, 
+                req.cluster_contains
+            ], 
+            "",
+            "error",
+            latency_ms
+
+        )
+        raise HTTPException(status_code=500, detail = str(e))
+    
+@app.post("/reload")
+def reload_engine():
+    try:
+        init_engine(
+            index_path = INDEX_FILE,
+            records_path = RECORDS_FILE,
+            embed_model_name = EMBED_MODEL_NAME,
+        )
+        return {"status": "reloaded"}
+    except Exception as e:
+        raise HTTPException(status_code = 500, detail = str(e))
+    

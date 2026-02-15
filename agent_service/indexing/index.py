@@ -5,7 +5,7 @@ import json
 import datetime 
 import faiss
 
-EVIDENCE_ROOT = Path(r"C:\Users\Yinpeng Li\CLIMsystems Dropbox\Yinpeng Li\climsystems_ai\evidence_library")
+EVIDENCE_ROOT = Path(__file__).resolve.parent().parent() / "evidence_library"
 META_CSV = EVIDENCE_ROOT/ "05_metadata" / "documents.csv"
 CHUNKS_DIR = EVIDENCE_ROOT/ "03_chunks"
 INDEX_DIR  = EVIDENCE_ROOT/ "04_index"

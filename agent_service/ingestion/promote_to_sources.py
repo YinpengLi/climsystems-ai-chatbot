@@ -28,10 +28,10 @@ import shutil
 # =====================
 # CONFIG
 # =====================
-EVIDENCE_ROOT = Path(r"C:\Users\Yinpeng Li\CLIMsystems Dropbox\Yinpeng Li\climsystems_ai\evidence_library")
+EVIDENCE_ROOT = Path(__file__).resolve.parent().parent() / "evidence_library"
 
 INBOX_DIRS = [
-    Path(r"C:\Users\Yinpeng Li\CLIMsystems Dropbox\Yinpeng Li\docs_references")
+    EVIDENCE_ROOT / "00_inbox"
 ]
 
 SOURCES_DIR = EVIDENCE_ROOT / "01_sources"

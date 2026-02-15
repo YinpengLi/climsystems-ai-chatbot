@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 import json
 from pathlib import Path
 
-EVIDENCE_ROOT = Path(r"C:\Users\Yinpeng Li\CLIMsystems Dropbox\Yinpeng Li\climsystems_ai\evidence_library")
+EVIDENCE_ROOT = Path(__file__).resolve.parent().parent() / "evidence_library"
 INDEX_DIR  = EVIDENCE_ROOT/ "04_index"
 INDEX_FILE = INDEX_DIR / "index.faiss"
 RECORDS_FILE = INDEX_DIR / "records.jsonl"

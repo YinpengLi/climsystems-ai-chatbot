@@ -8,11 +8,11 @@ import pandas as pd
 from docx import Document
 from pptx import Presentation
 
-BASE = Path(r"D:\climsystems_evidence_library")
-SRC = Path(r"C:\Users\Yinpeng Li\ClimSystems Dropbox\Yinpeng Li\climsystems_ai\evidence_library\01_sources")
-NORM = Path(r"C:\Users\Yinpeng Li\ClimSystems Dropbox\Yinpeng Li\climsystems_ai\evidence_library\02_normalised")
-META_CSV = Path(r"C:\Users\Yinpeng Li\ClimSystems Dropbox\Yinpeng Li\climsystems_ai\evidence_library\05_metadata\documents.csv")
-CHUNKS_DIR = Path(r"C:\Users\Yinpeng Li\CLIMsystems Dropbox\Yinpeng Li\climsystems_ai\evidence_library\03_chunks")
+BASE = Path(__file__).resolve.parent().parent() / "evidence_library"
+SRC = BASE / "01_sources"
+NORM = BASE / "02_normalised"
+META_CSV = BASE / "05_metadata" / "documents.csv" 
+CHUNKS_DIR = BASE / "03_chunks" 
 CHUNKS_DIR.mkdir(parents=True, exist_ok=True)
 NORM.mkdir(parents=True, exist_ok=True)
 META_CSV.parent.mkdir(parents=True, exist_ok=True)

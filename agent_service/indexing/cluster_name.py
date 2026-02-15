@@ -2,7 +2,7 @@ from collections import Counter
 import pandas as pd
 from pathlib import Path
 
-EVIDENCE_ROOT = Path(r"C:\Users\Yinpeng Li\CLIMsystems Dropbox\Yinpeng Li\climsystems_ai\evidence_library")
+EVIDENCE_ROOT = Path(__file__).resolve.parent().parent() / "evidence_library"
 NORM = EVIDENCE_ROOT / "02_normalised"
 META = EVIDENCE_ROOT / "05_metadata" / "documents.csv"
 EXCLUSION_LIST = ['...', 'climate', 'change', 'vol']
