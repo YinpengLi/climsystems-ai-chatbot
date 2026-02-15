@@ -72,7 +72,7 @@ uvicorn agent_service.api.app:app --reload
 
 ### 2. Start the UI
 ```bash
-streamlit run app.py
+streamlit run streamlit_app.py
 ```
 
 ---
