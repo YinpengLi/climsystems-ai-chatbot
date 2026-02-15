@@ -89,3 +89,4 @@ evidence_library/06_logs/session_log.jsonl
 
 ```bash
 uvicorn agent_service.api.app:app --reload
+```
