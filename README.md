@@ -34,7 +34,8 @@ agent_service/
 ├── ingestion/
 ├── indexing/
 ├── core/
-└── api/
+├── api/
+└── ui/
 
 ---
 
@@ -45,8 +46,10 @@ agent_service/
 3. Human review of metadata
 4. Promote to sources
 5. Profile + chunk
-6. Build index
-7. Serve API
+6. Run clustering 
+7. Human review of clusters
+8. Build index
+9. Serve API
 
 ## Web UI (Streamlit)
 
@@ -55,7 +58,7 @@ for interactive querying of the Climate Risk Evidence AI.
 
 The UI connects to the FastAPI backend.
 
-The API runs at http://127.0.0.1:8000
+The UI and API runs at http://127.0.0.1:8000
 
 ---
 
@@ -65,9 +68,14 @@ In terminal:
 
 ```bash
 uvicorn agent_service.api.app:app --reload
+```
 
-#In another terminal:
-
+### 2. Start the UI
+```bash
 streamlit run app.py
+```
 
+### View the requirements
+```bash
 pip install -r requirements.txt
+```
