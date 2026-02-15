@@ -42,14 +42,18 @@ agent_service/
 ## Workflow
 
 1. Drop documents into inbox
-2. Generate doc_id
-3. Human review of metadata
-4. Promote to sources
-5. Profile + chunk
-6. Run clustering 
-7. Human review of clusters
-8. Build index
-9. Serve API
+2. Ingestion
+  3. Generate doc_id
+  4. Human review of metadata
+  5. Promote to sources
+  6. Profile + chunk + language detect
+7. Indexing
+  8. Run clustering 
+  9. Human review of clusters
+  10. Build index
+11. Serve API
+12. Start the UI
+13. Use AI chatbot
 
 ## Web UI (Streamlit)
 
