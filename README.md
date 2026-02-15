@@ -48,7 +48,28 @@ agent_service/
 6. Build index
 7. Serve API
 
+## Web UI (Streamlit)
+
+The system includes an optional Streamlit-based user interface
+for interactive querying of the Climate Risk Evidence AI.
+
+The UI connects to the FastAPI backend.
+
+The API runs at http://127.0.0.1:8000
+
 ---
+
+### 1. Start the API
+
+In terminal:
+
+```bash
+uvicorn agent_service.api.app:app --reload
+
+#In another terminal:
+
+'''bash
+streamlit run app.py
 
 ```bash
 pip install -r requirements.txt
